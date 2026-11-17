@@ -30,6 +30,8 @@ clang -emit-llvm -S ./test.c -o test.ll
 
 ## 三、构建与验证
 
+iCoding 提交版位于[提交文件](提交文件/)目录，包含九个源文件和头文件。
+
 确保 `bison`、`flex`、MinGW GCC 和 Clang 可从 PATH 调用。在实验四目录打开 PowerShell，从源码构建后再运行生成器。
 
 ```powershell
