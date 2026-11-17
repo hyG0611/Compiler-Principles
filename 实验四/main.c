@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "codegen.h"
 
 extern int yyparse(void);
@@ -11,20 +12,23 @@ int main(int argc, char **argv)
     static char result[IR_CAPACITY];
     FILE *input = stdin;
 
-    if (argc > 2) {
-        fprintf(stderr, "Usage: %s [source.c]\n", argv[0]);
+    int module_output = argc > 1 && strcmp(argv[1], "--llvm") == 0;
+    int source_index = module_output ? 2 : 1;
+
+    if (argc > source_index + 1) {
+        fprintf(stderr, "Usage: %s [--llvm] [source.c]\n", argv[0]);
         return EXIT_FAILURE;
     }
-    if (argc == 2) {
-        input = fopen(argv[1], "r");
+    if (argc == source_index + 1) {
+        input = fopen(argv[source_index], "r");
         if (input == NULL) {
-            perror(argv[1]);
+            perror(argv[source_index]);
             return EXIT_FAILURE;
         }
     }
 
     /* Match the sample's test.c convention when no stdin was supplied. */
-    if (argc == 1) {
+    if (argc == source_index) {
         int first = fgetc(stdin);
         if (first == EOF) {
             input = fopen("test.c", "r");
@@ -42,7 +46,8 @@ int main(int argc, char **argv)
     if (input != stdin) fclose(input);
     if (status != 0) return EXIT_FAILURE;
 
-    genProgram(ast_root, result);
+    if (module_output) genProgram(ast_root, result);
+    else genSampleProgram(ast_root, result);
     return fputs(result, stdout) == EOF ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 

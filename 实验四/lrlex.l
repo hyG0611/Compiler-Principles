@@ -1,6 +1,8 @@
 %option noyywrap yylineno nodefault never-interactive nounistd noinput nounput
 
 %{
+#include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,7 +22,7 @@ HEX_FLOAT   0[xX]({HEX_DIGIT}+("."{HEX_DIGIT}*)?|"."{HEX_DIGIT}+)[pP][+-]?{DIGIT
 
 %%
 
-[ \t\r\n\v\f]+              ;
+([ \t\r\n\v\f]|\xE2\x80\x82)+              ;
 
 "//"[^\n]*                  ;
 \/\*([^*]|\*+[^*/])*\*+\/   ;
@@ -69,14 +71,24 @@ HEX_FLOAT   0[xX]({HEX_DIGIT}+("."{HEX_DIGIT}*)?|"."{HEX_DIGIT}+)[pP][+-]?{DIGIT
 ","                         { return Y_COMMA; }
 ";"                         { return Y_SEMICOLON; }
 
-{FLOAT_NUM}|{HEX_FLOAT}     {
+({FLOAT_NUM}|{HEX_FLOAT})[fF]?     {
                                 yylval.fvalue = strtof(yytext, NULL);
                                 return num_FLOAT;
                             }
 
 {HEX_INT}|{OCT_INT}|{DEC_INT} {
-                                yylval.ivalue =
-                                    (int)strtol(yytext, NULL, 0);
+                                errno = 0;
+                                unsigned long long bits = strtoull(yytext, NULL, 0);
+                                int decimal = yytext[0] != '0';
+                                if (!errno && decimal && bits == (uint64_t)INT32_MAX + 1)
+                                    return num_INT_MIN_MAG;
+                                if (errno || bits > (decimal ? (uint64_t)INT32_MAX : UINT32_MAX)) {
+                                    fprintf(stderr, "Integer literal out of range at line %d\n", yylineno);
+                                    return YYUNDEF;
+                                }
+                                /* Non-decimal literals can spell all 32 bits. */
+                                yylval.ivalue = bits <= INT32_MAX ? (int)bits
+                                    : (int)((int64_t)bits - INT64_C(4294967296));
                                 return num_INT;
                             }
 {ID}                        {

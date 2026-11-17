@@ -210,6 +210,9 @@ enum _node_type{
 	// The translation unit cursor exists primarily to act as the root cursor for
 	// traversing the contents of a translation unit
 	TRANSLATION_UNIT = 300,
+
+	// Decimal magnitude INT32_MAX + 1, valid under unary minus.
+	INT_MIN_MAGNITUDE = 301,
 };
 
 typedef enum _node_type node_type;

@@ -10,6 +10,7 @@ int yylex(void);
 void yyerror(const char *s);
 
 past ast_root = NULL;
+static size_t pending_min_literals;
 
 
 /* 复制字符串，避免依赖非标准的 strdup */
@@ -46,6 +47,16 @@ static past make_binary(int op, past left, past right)
 /* 构造一元运算节点 */
 static past make_unary(int op, past child)
 {
+    if (op == Y_SUB) {
+        past literal = child;
+        while (literal->nodeType == PAREN_EXPR) literal = literal->left;
+        if (literal->nodeType == INT_MIN_MAGNITUDE) {
+            literal->nodeType = INTEGER_LITERAL;
+            literal->ivalue = INT_MIN;
+            --pending_min_literals;
+            return child;
+        }
+    }
     past node = newAstNode(UNARY_OPERATOR);
     node->ivalue = op;
     node->left = child;
@@ -166,9 +177,21 @@ static past make_call(char *name, past args)
 %nonassoc LOWER_THAN_ELSE
 %nonassoc Y_ELSE
 
-%start CompUnits
+%token num_INT_MIN_MAG
+%initial-action { pending_min_literals = 0; ast_root = NULL; }
+%start TranslationUnit
 
 %%
+
+TranslationUnit
+    : CompUnits
+      {
+          if (pending_min_literals != 0) {
+              yyerror("decimal integer literal exceeds the signed 32-bit range");
+              YYABORT;
+          }
+      }
+    ;
 
 CompUnits
     : CompUnit
@@ -397,20 +420,17 @@ FuncParam
       }
     | Type Y_ID ArraySubscripts
       {
-          if ($1 == Y_FLOAT) { yyerror("float array parameters are not supported"); YYABORT; }
-          $$ = make_param($2, $3);
+          $$ = make_param($2, $3); $$->is_float = $1 == Y_FLOAT;
       }
     | Type Y_ID Y_LSQUARE Y_RSQUARE
       {
-          if ($1 == Y_FLOAT) { yyerror("float array parameters are not supported"); YYABORT; }
-          $$ = make_param($2, newAstNode(ARRAY_SUBSCRIPT_EXPR));
+          $$ = make_param($2, newAstNode(ARRAY_SUBSCRIPT_EXPR)); $$->is_float = $1 == Y_FLOAT;
       }
     | Type Y_ID Y_LSQUARE Y_RSQUARE ArraySubscripts
       {
           past first = newAstNode(ARRAY_SUBSCRIPT_EXPR);
           first->next = $5;
-          if ($1 == Y_FLOAT) { yyerror("float array parameters are not supported"); YYABORT; }
-          $$ = make_param($2, first);
+          $$ = make_param($2, first); $$->is_float = $1 == Y_FLOAT;
       }
     ;
 
@@ -574,6 +594,11 @@ PrimaryExp
     | num_INT
       {
           $$ = newInt($1);
+      }
+    | num_INT_MIN_MAG
+      {
+          ++pending_min_literals;
+          $$ = newAstNode(INT_MIN_MAGNITUDE);
       }
     | num_FLOAT
       {

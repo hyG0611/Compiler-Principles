@@ -15,6 +15,8 @@ int genAssignStmt(past node, char *result);
 int genIfStmt(past node, char *result);
 int genWhileStmt(past node, char *result);
 void genProgram(past node, char *result);
+/* Generate the instruction listing used in the course's sample outputs. */
+void genSampleProgram(past node, char *result);
 
 #endif
 

@@ -45,7 +45,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 123 "lrparser.y"
+#line 134 "lrparser.y"
 
 #include "ast.h"
 
@@ -96,7 +96,8 @@ extern int yydebug;
     Y_RSQUARE = 291,               /* Y_RSQUARE  */
     Y_COMMA = 292,                 /* Y_COMMA  */
     Y_SEMICOLON = 293,             /* Y_SEMICOLON  */
-    LOWER_THAN_ELSE = 294          /* LOWER_THAN_ELSE  */
+    LOWER_THAN_ELSE = 294,         /* LOWER_THAN_ELSE  */
+    num_INT_MIN_MAG = 295          /* num_INT_MIN_MAG  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -105,14 +106,14 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 127 "lrparser.y"
+#line 138 "lrparser.y"
 
     int ivalue;
     float fvalue;
     char *svalue;
     past node;
 
-#line 116 "lrparser.tab.h"
+#line 117 "lrparser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

@@ -26,7 +26,7 @@
 | `genIfStmt` | 条件为真跳到 then，为假跳到 else 或汇合块。已执行 `ret`、`break` 或 `continue` 的块已经有终结指令。 |
 | `genWhileStmt` | 先跳到条件块，条件为真进入循环体，为假退出。正常执行完循环体和 `continue` 都回到条件块，`break` 跳到循环出口。 |
 
-五个函数使用题目指定的 `(past node, char *result)`。表达式函数将指令追加到 `result`，并在生成器内部保留结果操作数供父结点使用。入口 `genProgram` 初始化生成状态。输出只有函数定义及函数体。
+五个函数使用题目指定的 `(past node, char *result)`。表达式函数将指令追加到 `result`，并在生成器内部保留结果操作数供父结点使用。入口 `genProgram` 初始化生成状态。默认输出按课程样例生成指令文本。使用 `--llvm` 可生成能交给 Clang 编译的 LLVM IR。
 
 ## 三、构建与验证
 
@@ -34,8 +34,8 @@
 
 ```powershell
 .\build.ps1
-cmd /c "codegen.exe < test.c > generated-test.ll"
-cmd /c "codegen.exe < control.c > generated-control.ll"
+cmd /c "codegen.exe --llvm < test.c > generated-test.ll"
+cmd /c "codegen.exe --llvm < control.c > generated-control.ll"
 
 & D:/LLVM/bin/clang.exe -Wno-override-module -c generated-control.ll -o control.o
 gcc control.o -o control.exe
